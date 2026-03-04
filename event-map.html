@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Localisation Événement</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
+    
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        #map {
+            height: 100vh;
+            width: 100%;
+        }
+        
+        .info-banner {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            font-size: 14px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- Bannière d'information -->
+    <div id="info" class="info-banner"></div>
+    
+    <!-- Conteneur de la carte -->
+    <div id="map"></div>
+
+    <script>
+        // ========================================
+        // RÉCUPÉRER LES PARAMÈTRES DE L'URL
+        // ========================================
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Coordonnées (avec valeurs par défaut = Campus Esprit)
+        const lat = parseFloat(urlParams.get('lat')) || 36.898537;
+        const lng = parseFloat(urlParams.get('lng')) || 10.189735;
+        
+        // Informations de l'événement
+        const eventTitle = urlParams.get('title') || 'Événement';
+        const eventAddress = urlParams.get('address') || '';
+        
+        // Afficher l'adresse dans la bannière
+        if (eventAddress) {
+            document.getElementById('info').textContent = eventAddress;
+        } else {
+            document.getElementById('info').style.display = 'none';
+        }
+        
+        // ========================================
+        // CRÉER LA CARTE
+        // ========================================
+        const map = L.map('map').setView([lat, lng], 15);
+        
+        // Ajouter les tuiles OpenStreetMap
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+        
+        // ========================================
+        // AJOUTER LE MARQUEUR VIOLET
+        // ========================================
+        // Créer une icône violette personnalisée
+        const violetIcon = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+        
+        // Ajouter le marqueur
+        const marker = L.marker([lat, lng], { icon: violetIcon }).addTo(map);
+        
+        // Popup avec le titre de l'événement
+        marker.bindPopup(`
+            <div style="text-align: center; font-size: 14px;">
+                <strong>${eventTitle}</strong>
+            </div>
+        `).openPopup();
+        
+        // ========================================
+        // CONTRÔLES DE LA CARTE
+        // ========================================
+        // Bouton pour recentrer
+        const recenterButton = L.control({ position: 'topright' });
+        recenterButton.onAdd = function() {
+            const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+            div.innerHTML = '<a href="#" style="padding: 5px 10px; background: white; text-decoration: none; color: #8b5cf6; font-weight: bold;">📍</a>';
+            div.onclick = function(e) {
+                e.preventDefault();
+                map.setView([lat, lng], 15);
+            };
+            return div;
+        };
+        recenterButton.addTo(map);
+        
+        console.log('Carte initialisée avec succès:', { lat, lng, eventTitle });
+    </script>
+</body>
+</html>
+```
