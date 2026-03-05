@@ -4,484 +4,291 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Localisation Événement</title>
-
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin=""/>
-
-    <!-- Leaflet JavaScript -->
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
-
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-        }
-
-        /* ── Barre de recherche ── */
         #search-bar {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            display: flex;
-            gap: 6px;
-            width: 90%;
-            max-width: 500px;
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; display: flex; gap: 6px; width: 90%; max-width: 500px;
         }
-
         #search-input {
-            flex: 1;
-            padding: 10px 14px;
-            border: 2px solid #8b5cf6;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            flex: 1; padding: 10px 14px; border: 2px solid #8b5cf6;
+            border-radius: 8px; font-size: 14px; outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); background: white;
         }
-
         #search-btn {
-            padding: 10px 16px;
-            background: #8b5cf6;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            white-space: nowrap;
+            padding: 10px 16px; background: #8b5cf6; color: white;
+            border: none; border-radius: 8px; font-size: 14px; cursor: pointer;
         }
-
         #search-btn:hover { background: #7c3aed; }
 
-        /* ── Résultats de recherche ── */
         #search-results {
-            position: absolute;
-            top: 56px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1001;
-            width: 90%;
-            max-width: 500px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: none;
-            max-height: 200px;
-            overflow-y: auto;
+            position: absolute; top: 56px; left: 50%; transform: translateX(-50%);
+            z-index: 1001; width: 90%; max-width: 500px; background: white;
+            border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: none; max-height: 220px; overflow-y: auto;
         }
-
         .result-item {
-            padding: 10px 14px;
-            cursor: pointer;
-            font-size: 13px;
-            border-bottom: 1px solid #f0f0f0;
-            color: #333;
+            padding: 12px 14px; cursor: pointer; font-size: 13px;
+            border-bottom: 1px solid #f0f0f0; color: #333; line-height: 1.4;
         }
-
         .result-item:hover { background: #f3f0ff; color: #8b5cf6; }
         .result-item:last-child { border-bottom: none; }
 
-        /* ── Carte ── */
-        #map {
-            height: 100vh;
-            width: 100%;
-        }
+        #map { height: 100vh; width: 100%; }
 
-        /* ── Bannière adresse ── */
-        #address-banner {
-            position: absolute;
-            bottom: 80px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            background: white;
-            padding: 10px 16px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            font-size: 13px;
-            max-width: 90%;
-            text-align: center;
-            display: none;
-        }
-
-        /* ── Bouton confirmer (mode sélection) ── */
-        #confirm-btn {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1000;
-            background: #8b5cf6;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            padding: 14px 32px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(139,92,246,0.4);
-            display: none;
-        }
-
-        #confirm-btn:hover { background: #7c3aed; }
-
-        /* ── Indicateur mode sélection ── */
         #mode-indicator {
-            position: absolute;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 999;
-            background: #fef3c7;
-            color: #92400e;
-            border: 1px solid #f59e0b;
-            padding: 6px 14px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-            display: none;
+            position: absolute; top: 68px; left: 50%; transform: translateX(-50%);
+            z-index: 999; background: #fef3c7; color: #92400e;
+            border: 1px solid #f59e0b; padding: 6px 14px;
+            border-radius: 6px; font-size: 12px; display: none;
         }
 
-        /* ── Loading ── */
+        /* Panneau bas */
+        #confirm-panel {
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: white; border-radius: 16px 16px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            padding: 16px 20px 28px; display: none;
+        }
+        .handle {
+            width: 40px; height: 4px; background: #e5e7eb;
+            border-radius: 2px; margin: 0 auto 12px;
+        }
+        #address-display {
+            font-size: 14px; color: #374151; margin-bottom: 6px; line-height: 1.5;
+        }
+        #address-display strong { color: #7c3aed; }
+        #coords-display { font-size: 11px; color: #9ca3af; margin-bottom: 16px; }
+        #confirm-btn {
+            width: 100%; padding: 14px; background: #8b5cf6; color: white;
+            border: none; border-radius: 10px; font-size: 15px;
+            font-weight: 600; cursor: pointer; transition: background 0.2s;
+        }
+        #confirm-btn:hover { background: #7c3aed; }
+        #confirm-btn:disabled { background: #c4b5fd; cursor: not-allowed; }
+
         #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2000;
-            background: white;
-            padding: 20px 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            font-size: 14px;
-            display: none;
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); z-index: 2000;
+            background: white; padding: 16px 24px;
+            border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            font-size: 14px; display: none;
         }
     </style>
 </head>
 <body>
 
-    <!-- Barre de recherche -->
-    <div id="search-bar">
-        <input id="search-input" type="text" placeholder="🔍 Rechercher une adresse..." />
-        <button id="search-btn" onclick="searchAddress()">Chercher</button>
-    </div>
+<div id="search-bar">
+    <input id="search-input" type="text" placeholder="🔍 Rechercher un lieu..."/>
+    <button id="search-btn" onclick="searchAddress()">Chercher</button>
+</div>
+<div id="search-results"></div>
+<div id="mode-indicator">👆 Appuyez sur la carte pour choisir</div>
+<div id="map"></div>
+<div id="loading">⏳ Recherche...</div>
 
-    <!-- Résultats -->
-    <div id="search-results"></div>
+<div id="confirm-panel">
+    <div class="handle"></div>
+    <div id="address-display"><strong>📍 Lieu :</strong> <span id="addr-text">—</span></div>
+    <div id="coords-display"></div>
+    <button id="confirm-btn" onclick="confirmLocation()" disabled>✅ Confirmer ce lieu</button>
+</div>
 
-    <!-- Indicateur mode sélection -->
-    <div id="mode-indicator">👆 Appuyez sur la carte pour choisir l'emplacement</div>
+<script>
+    const urlParams    = new URLSearchParams(window.location.search);
+    const initLat      = parseFloat(urlParams.get('lat'))     || 36.898537;
+    const initLng      = parseFloat(urlParams.get('lng'))     || 10.189735;
+    const eventTitle   = urlParams.get('title')    || '';
+    const eventAddress = urlParams.get('address')  || '';
+    const mode         = urlParams.get('mode')     || 'view';
 
-    <!-- Carte -->
-    <div id="map"></div>
+    let selLat = initLat, selLng = initLng;
+    let selAddress = eventAddress;
+    let selMarker  = null;
+    let ready      = false;
 
-    <!-- Bannière adresse sélectionnée -->
-    <div id="address-banner"></div>
+    // ── Carte ──
+    const map = L.map('map').setView([initLat, initLng], 15);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19, attribution: '© OpenStreetMap'
+    }).addTo(map);
 
-    <!-- Bouton confirmer -->
-    <button id="confirm-btn" onclick="confirmLocation()">✅ Confirmer cet emplacement</button>
+    const violetIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25,41], iconAnchor: [12,41], popupAnchor: [1,-34], shadowSize: [41,41]
+    });
 
-    <!-- Loading spinner -->
-    <div id="loading">⏳ Recherche en cours...</div>
+    // Marqueur initial mode view
+    if (mode === 'view') {
+        L.marker([initLat, initLng], { icon: violetIcon }).addTo(map)
+         .bindPopup(`<b>${eventTitle}</b>${eventAddress?'<br><small>'+eventAddress+'</small>':''}`).openPopup();
+    }
 
-    <script>
-        // ══════════════════════════════════════════
-        // PARAMÈTRES URL
-        // ══════════════════════════════════════════
-        const urlParams = new URLSearchParams(window.location.search);
-
-        const defaultLat = 36.898537;
-        const defaultLng = 10.189735;
-
-        let lat = parseFloat(urlParams.get('lat')) || defaultLat;
-        let lng = parseFloat(urlParams.get('lng')) || defaultLng;
-
-        const eventTitle   = urlParams.get('title')   || 'Événement';
-        const eventAddress = urlParams.get('address') || '';
-
-        // mode=select → l'utilisateur peut choisir un emplacement
-        // mode=view   → lecture seule (affichage simple)
-        const mode = urlParams.get('mode') || 'view';
-
-        // ══════════════════════════════════════════
-        // VARIABLES D'ÉTAT
-        // ══════════════════════════════════════════
-        let selectedLat = lat;
-        let selectedLng = lng;
-        let selectedAddress = eventAddress;
-        let selectionMarker = null;
-
-        // ══════════════════════════════════════════
-        // INITIALISATION DE LA CARTE
-        // ══════════════════════════════════════════
-        const map = L.map('map').setView([lat, lng], 15);
-
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        // ══════════════════════════════════════════
-        // ICÔNE VIOLETTE
-        // ══════════════════════════════════════════
-        const violetIcon = L.icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
+    // ── Mode sélection ──
+    if (mode === 'select') {
+        document.getElementById('mode-indicator').style.display = 'block';
+        map.on('click', e => {
+            selLat = e.latlng.lat;
+            selLng = e.latlng.lng;
+            addMarker(selLat, selLng, '📍 Recherche...');
+            setPanel('⏳ Chargement de l\'adresse...', selLat, selLng, false);
+            reverseGeocode(selLat, selLng);
         });
+    }
 
-        // ══════════════════════════════════════════
-        // MARQUEUR INITIAL
-        // ══════════════════════════════════════════
-        const initialMarker = L.marker([lat, lng], { icon: violetIcon }).addTo(map);
-        initialMarker.bindPopup(`
-            <div style="text-align:center; font-size:14px; min-width:120px;">
-                <strong>${eventTitle}</strong>
-                ${eventAddress ? '<br><small style="color:#666">' + eventAddress + '</small>' : ''}
-            </div>
-        `).openPopup();
+    function addMarker(mLat, mLng, label) {
+        if (selMarker) map.removeLayer(selMarker);
+        selMarker = L.marker([mLat, mLng], { icon: violetIcon }).addTo(map);
+        selMarker.bindPopup(label).openPopup();
+    }
 
-        // ══════════════════════════════════════════
-        // MODE SÉLECTION
-        // ══════════════════════════════════════════
+    function setPanel(address, pLat, pLng, isReady) {
+        document.getElementById('confirm-panel').style.display = 'block';
+        document.getElementById('addr-text').textContent = address;
+        document.getElementById('coords-display').textContent =
+            'Lat: ' + pLat.toFixed(6) + '  |  Lng: ' + pLng.toFixed(6);
+        const btn = document.getElementById('confirm-btn');
+        btn.disabled = !isReady;
+        btn.textContent = isReady ? '✅ Confirmer ce lieu' : '⏳ Chargement...';
+        ready = isReady;
+    }
+
+    // ── Recherche ──
+    function searchAddress() {
+        const q = document.getElementById('search-input').value.trim();
+        if (!q) return;
+        showLoading(true); hideResults();
+        fetch('https://nominatim.openstreetmap.org/search?format=json&q=' +
+              encodeURIComponent(q) + '&limit=6&accept-language=fr')
+        .then(r => r.json())
+        .then(results => {
+            showLoading(false);
+            results.length ? showResults(results) : showMsg('Aucun résultat.');
+        })
+        .catch(() => { showLoading(false); showMsg('Erreur réseau.'); });
+    }
+
+    function showResults(results) {
+        const c = document.getElementById('search-results');
+        c.innerHTML = '';
+        c.style.display = 'block';
+        results.forEach(r => {
+            const d = document.createElement('div');
+            d.className = 'result-item';
+            d.textContent = r.display_name;
+            d.onclick = () => pickResult(parseFloat(r.lat), parseFloat(r.lon), r.display_name);
+            c.appendChild(d);
+        });
+    }
+
+    function pickResult(rLat, rLng, fullAddress) {
+        hideResults();
+        document.getElementById('search-input').value = '';
+        map.setView([rLat, rLng], 16);
+
+        selLat = rLat; selLng = rLng;
+        // ← L'adresse vient directement de Nominatim = adresse courte pour le champ lieu
+        selAddress = shortAddr(fullAddress);
+
+        addMarker(rLat, rLng, '<b>📍</b><br><small>' + selAddress + '</small>');
+
         if (mode === 'select') {
-            // Afficher les éléments de sélection
-            document.getElementById('mode-indicator').style.display = 'block';
-            document.getElementById('confirm-btn').style.display = 'block';
-
-            // Clic sur la carte → placer un marqueur
-            map.on('click', function(e) {
-                selectedLat = e.latlng.lat;
-                selectedLng = e.latlng.lng;
-
-                // Supprimer l'ancien marqueur de sélection
-                if (selectionMarker) {
-                    map.removeLayer(selectionMarker);
-                }
-
-                // Ajouter le nouveau marqueur
-                selectionMarker = L.marker([selectedLat, selectedLng], { icon: violetIcon }).addTo(map);
-                selectionMarker.bindPopup('📍 Position sélectionnée').openPopup();
-
-                // Reverse geocoding : obtenir l'adresse
-                reverseGeocode(selectedLat, selectedLng);
-            });
+            setPanel(selAddress, rLat, rLng, true);
         }
+    }
 
-        // ══════════════════════════════════════════
-        // BOUTON RECENTRER
-        // ══════════════════════════════════════════
-        const recenterButton = L.control({ position: 'topright' });
-        recenterButton.onAdd = function() {
-            const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-            div.innerHTML = '<a href="#" title="Recentrer" style="padding:5px 10px; background:white; text-decoration:none; color:#8b5cf6; font-weight:bold; display:block;">📍</a>';
-            div.onclick = function(e) {
-                e.preventDefault();
-                map.setView([lat, lng], 15);
-            };
-            return div;
-        };
-        recenterButton.addTo(map);
-
-        // ══════════════════════════════════════════
-        // RECHERCHE D'ADRESSE (Nominatim)
-        // ══════════════════════════════════════════
-        function searchAddress() {
-            const query = document.getElementById('search-input').value.trim();
-            if (!query) return;
-
-            showLoading(true);
-            hideResults();
-
-            // Nominatim OpenStreetMap - gratuit, sans clé API
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&accept-language=fr`;
-
-            fetch(url, {
-                headers: { 'Accept': 'application/json' }
-            })
-            .then(r => r.json())
-            .then(results => {
-                showLoading(false);
-                if (results.length === 0) {
-                    showResultsMessage('Aucun résultat trouvé. Essayez une autre adresse.');
-                    return;
-                }
-                displayResults(results);
-            })
-            .catch(err => {
-                showLoading(false);
-                showResultsMessage('Erreur de recherche. Vérifiez votre connexion.');
-                console.error(err);
-            });
-        }
-
-        function displayResults(results) {
-            const container = document.getElementById('search-results');
-            container.innerHTML = '';
-            container.style.display = 'block';
-
-            results.forEach(result => {
-                const div = document.createElement('div');
-                div.className = 'result-item';
-                div.textContent = result.display_name;
-                div.onclick = () => selectSearchResult(
-                    parseFloat(result.lat),
-                    parseFloat(result.lon),
-                    result.display_name
-                );
-                container.appendChild(div);
-            });
-        }
-
-        function selectSearchResult(rLat, rLng, address) {
-            hideResults();
-            document.getElementById('search-input').value = '';
-
-            // Déplacer la carte
-            map.setView([rLat, rLng], 16);
-
-            if (mode === 'select') {
-                // Mode sélection : placer le marqueur
-                selectedLat = rLat;
-                selectedLng = rLng;
-                selectedAddress = address;
-
-                if (selectionMarker) map.removeLayer(selectionMarker);
-                selectionMarker = L.marker([rLat, rLng], { icon: violetIcon }).addTo(map);
-                selectionMarker.bindPopup(`<div style="text-align:center;"><strong>📍 Position sélectionnée</strong><br><small>${shortenAddress(address)}</small></div>`).openPopup();
-
-                showAddressBanner(address);
-            } else {
-                // Mode vue : juste afficher un marqueur temporaire
-                if (selectionMarker) map.removeLayer(selectionMarker);
-                selectionMarker = L.marker([rLat, rLng], { icon: violetIcon }).addTo(map);
-                selectionMarker.bindPopup(`<div style="text-align:center; font-size:13px;">${shortenAddress(address)}</div>`).openPopup();
+    // ── Reverse geocoding ──
+    function reverseGeocode(rLat, rLng) {
+        fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' +
+              rLat + '&lon=' + rLng + '&accept-language=fr')
+        .then(r => r.json())
+        .then(result => {
+            if (result && result.display_name) {
+                selAddress = shortAddr(result.display_name);
+                addMarker(rLat, rLng, '<b>📍</b><br><small>' + selAddress + '</small>');
+                setPanel(selAddress, rLat, rLng, true);
             }
-        }
-
-        function showResultsMessage(msg) {
-            const container = document.getElementById('search-results');
-            container.innerHTML = `<div class="result-item" style="color:#888;">${msg}</div>`;
-            container.style.display = 'block';
-        }
-
-        function hideResults() {
-            document.getElementById('search-results').style.display = 'none';
-        }
-
-        // ══════════════════════════════════════════
-        // REVERSE GEOCODING
-        // ══════════════════════════════════════════
-        function reverseGeocode(rLat, rLng) {
-            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${rLat}&lon=${rLng}&accept-language=fr`;
-
-            fetch(url)
-            .then(r => r.json())
-            .then(result => {
-                if (result && result.display_name) {
-                    selectedAddress = result.display_name;
-                    showAddressBanner(result.display_name);
-                    if (selectionMarker) {
-                        selectionMarker.bindPopup(`
-                            <div style="text-align:center; font-size:13px;">
-                                <strong>📍 Position sélectionnée</strong><br>
-                                <small>${shortenAddress(result.display_name)}</small>
-                            </div>
-                        `).openPopup();
-                    }
-                }
-            })
-            .catch(() => {
-                showAddressBanner(`Lat: ${rLat.toFixed(5)}, Lng: ${rLng.toFixed(5)}`);
-            });
-        }
-
-        // ══════════════════════════════════════════
-        // CONFIRMER LA SÉLECTION
-        // ══════════════════════════════════════════
-        function confirmLocation() {
-            const data = {
-                latitude: selectedLat,
-                longitude: selectedLng,
-                address: selectedAddress
-            };
-
-            // Méthode 1 : postMessage (pour FlutterFlow WebView)
-            if (window.parent && window.parent !== window) {
-                window.parent.postMessage(JSON.stringify(data), '*');
-            }
-
-            // Méthode 2 : URL callback (alternative)
-            const callbackUrl = urlParams.get('callback');
-            if (callbackUrl) {
-                const url = callbackUrl +
-                    '?lat=' + selectedLat +
-                    '&lng=' + selectedLng +
-                    '&address=' + encodeURIComponent(selectedAddress);
-                window.location.href = url;
-            }
-
-            // Méthode 3 : Fermer la WebView avec les données
-            if (window.flutter_inappwebview) {
-                window.flutter_inappwebview.callHandler('locationSelected', data);
-            }
-
-            // Confirmation visuelle
-            document.getElementById('confirm-btn').textContent = '✅ Emplacement confirmé !';
-            document.getElementById('confirm-btn').style.background = '#10b981';
-            setTimeout(() => {
-                document.getElementById('confirm-btn').textContent = '✅ Confirmer cet emplacement';
-                document.getElementById('confirm-btn').style.background = '#8b5cf6';
-            }, 2000);
-
-            console.log('Location confirmed:', data);
-            alert(`✅ Position confirmée !\nLat: ${selectedLat.toFixed(6)}\nLng: ${selectedLng.toFixed(6)}\nAdresse: ${shortenAddress(selectedAddress)}`);
-        }
-
-        // ══════════════════════════════════════════
-        // UTILITAIRES
-        // ══════════════════════════════════════════
-        function showAddressBanner(address) {
-            const banner = document.getElementById('address-banner');
-            banner.textContent = '📍 ' + shortenAddress(address);
-            banner.style.display = 'block';
-        }
-
-        function shortenAddress(address) {
-            if (!address) return '';
-            const parts = address.split(',');
-            return parts.slice(0, 3).join(',').trim();
-        }
-
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'block' : 'none';
-        }
-
-        // ══════════════════════════════════════════
-        // KEYBOARD : Rechercher en appuyant Entrée
-        // ══════════════════════════════════════════
-        document.getElementById('search-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') searchAddress();
+        })
+        .catch(() => {
+            selAddress = 'Lat:' + rLat.toFixed(4) + ' Lng:' + rLng.toFixed(4);
+            setPanel(selAddress, rLat, rLng, true);
         });
+    }
 
-        // Fermer les résultats en cliquant ailleurs
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('#search-bar') && !e.target.closest('#search-results')) {
-                hideResults();
-            }
-        });
+    // ══════════════════════════════════════════════════
+    // CONFIRMER → STOCKER et AFFICHER pour FlutterFlow
+    // ══════════════════════════════════════════════════
+    function confirmLocation() {
+        if (!ready) return;
 
-        console.log('Carte initialisée | mode:', mode, '| lat:', lat, '| lng:', lng);
-    </script>
+        // Stocker dans le titre de la page → FlutterFlow peut le lire via JS
+        document.title = 'CONFIRMED|' + selLat.toFixed(7) + '|' + selLng.toFixed(7) + '|' + selAddress;
+
+        // Log console (visible dans FlutterFlow WebView debug)
+        console.log('FF_LOCATION_RESULT=' + JSON.stringify({
+            lat: selLat, lng: selLng, address: selAddress
+        }));
+
+        // Afficher écran succès
+        document.getElementById('confirm-panel').innerHTML = `
+            <div class="handle"></div>
+            <div style="text-align:center;padding:8px 0;">
+                <div style="font-size:40px;margin-bottom:8px;">✅</div>
+                <div style="font-weight:700;font-size:17px;color:#10b981;margin-bottom:12px;">Lieu confirmé !</div>
+                <div style="background:#f0fdf4;border:1px solid #10b981;border-radius:10px;padding:14px;text-align:left;">
+                    <div style="font-size:14px;color:#374151;margin-bottom:8px;">
+                        <strong style="color:#7c3aed;">📍 Lieu :</strong><br>${selAddress}
+                    </div>
+                    <div style="font-size:12px;color:#6b7280;">
+                        Latitude : ${selLat.toFixed(6)}<br>
+                        Longitude : ${selLng.toFixed(6)}
+                    </div>
+                </div>
+                <div style="margin-top:14px;padding:10px;background:#fef3c7;border-radius:8px;">
+                    <div style="font-size:12px;color:#92400e;">
+                        ⬅️ Appuyez sur Retour pour enregistrer automatiquement ces informations dans le formulaire.
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ── Utilitaires ──
+    function shortAddr(full) {
+        if (!full) return '';
+        return full.split(',').slice(0, 3).join(',').trim();
+    }
+    function showLoading(s) { document.getElementById('loading').style.display = s?'block':'none'; }
+    function showMsg(m) {
+        const c = document.getElementById('search-results');
+        c.innerHTML = '<div class="result-item" style="color:#888;">'+m+'</div>';
+        c.style.display = 'block';
+    }
+    function hideResults() { document.getElementById('search-results').style.display = 'none'; }
+
+    // Recentrer
+    const rc = L.control({ position: 'topright' });
+    rc.onAdd = function() {
+        const d = L.DomUtil.create('div','leaflet-bar leaflet-control');
+        d.innerHTML = '<a href="#" style="padding:5px 10px;background:white;text-decoration:none;color:#8b5cf6;font-weight:bold;display:block;">📍</a>';
+        d.onclick = e => { e.preventDefault(); map.setView([initLat,initLng],15); };
+        return d;
+    };
+    rc.addTo(map);
+
+    document.getElementById('search-input').addEventListener('keypress', e => {
+        if (e.key === 'Enter') searchAddress();
+    });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#search-bar') && !e.target.closest('#search-results')) hideResults();
+    });
+</script>
 </body>
 </html>
